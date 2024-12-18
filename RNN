@@ -1,0 +1,73 @@
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN, Dense, Input
+import matplotlib.pyplot as plt
+
+# Generate synthetic time series data
+def generate_time_series(n_samples, n_steps):
+    X = np.random.rand(n_samples, n_steps)
+    y = np.sum(X, axis=1, keepdims=True)  # Next value is the sum of all previous values
+    return X, y
+
+# Parameters
+n_samples = 1000
+n_steps = 10
+
+# Generate data
+X, y = generate_time_series(n_samples, n_steps)
+
+# Split into training and testing sets
+train_size = int(0.8 * n_samples)
+X_train, X_test = X[:train_size], X[train_size:]
+y_train, y_test = y[:train_size], y[train_size:]
+
+# Reshape data for RNN input (samples, timesteps, features)
+X_train = X_train[..., np.newaxis]  # Add feature dimension
+X_test = X_test[..., np.newaxis]
+
+# Build the RNN model
+model = Sequential([
+    Input(shape=(n_steps, 1)),            # Input shape: (timesteps, features)
+    SimpleRNN(20, activation='tanh'),    # Simple RNN layer with 20 units
+    Dense(1)                             # Output layer with a single neuron
+])
+
+# Compile the model
+model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+
+# Train the model
+history = model.fit(
+    X_train, y_train,
+    epochs=20,
+    batch_size=32,
+    validation_split=0.2
+)
+
+# Evaluate the model
+loss, mae = model.evaluate(X_test, y_test)
+print(f"Test Loss: {loss}")
+print(f"Test MAE: {mae}")
+
+# Make predictions
+predictions = model.predict(X_test)
+
+# Plot actual vs predicted values
+plt.figure(figsize=(10, 6))
+plt.plot(y_test, label="Actual", color='blue')
+plt.plot(predictions, label="Predicted", color='red')
+plt.xlabel("Sample Index")
+plt.ylabel("Value")
+plt.title("Actual vs Predicted Values")
+plt.legend()
+plt.show()
+
+# Visualize training history
+plt.figure(figsize=(10, 6))
+plt.plot(history.history['loss'], label="Training Loss", color='blue')
+plt.plot(history.history['val_loss'], label="Validation Loss", color='red')
+plt.xlabel("Epochs")
+plt.ylabel("Loss (MSE)")
+plt.title("Training and Validation Loss")
+plt.legend()
+plt.show()
