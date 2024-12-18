@@ -1,0 +1,80 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.models import Model, Sequential
+from tensorflow.keras.layers import Dense, Input
+from tensorflow.keras.datasets import mnist
+
+# Load the MNIST dataset
+(X_train, _), (X_test, _) = mnist.load_data()
+
+# Normalize and reshape the data
+X_train = X_train.astype('float32') / 255.0
+X_test = X_test.astype('float32') / 255.0
+X_train = X_train.reshape((X_train.shape[0], -1))  # Flatten 28x28 to 784
+X_test = X_test.reshape((X_test.shape[0], -1))
+
+# Define the dimensions
+input_dim = X_train.shape[1]
+encoding_dim = 64  # Dimension of the latent space
+
+# Build the autoencoder
+input_layer = Input(shape=(input_dim,))
+encoded = Dense(encoding_dim, activation='relu')(input_layer)
+decoded = Dense(input_dim, activation='sigmoid')(encoded)
+
+# Create the autoencoder model
+autoencoder = Model(input_layer, decoded)
+
+# Create the encoder model for extracting latent features
+encoder = Model(input_layer, encoded)
+
+# Compile the autoencoder
+autoencoder.compile(optimizer='adam', loss='mse')
+
+# Train the autoencoder
+history = autoencoder.fit(
+    X_train, X_train,  # Input and target are the same for autoencoders
+    epochs=20,
+    batch_size=256,
+    shuffle=True,
+    validation_data=(X_test, X_test)
+)
+
+# Encode the test set
+encoded_imgs = encoder.predict(X_test)
+
+# Reconstruct the test set
+decoded_imgs = autoencoder.predict(X_test)
+
+# Visualize original, encoded, and reconstructed images
+n = 10  # Number of images to display
+plt.figure(figsize=(20, 6))
+for i in range(n):
+    # Display original
+    ax = plt.subplot(3, n, i + 1)
+    plt.imshow(X_test[i].reshape(28, 28), cmap='gray')
+    plt.title("Original")
+    plt.axis('off')
+
+    # Display encoded
+    ax = plt.subplot(3, n, i + n + 1)
+    plt.imshow(encoded_imgs[i].reshape(8, 8), cmap='gray')  # 64 dimensions reshaped
+    plt.title("Encoded")
+    plt.axis('off')
+
+    # Display reconstructed
+    ax = plt.subplot(3, n, i + 2 * n + 1)
+    plt.imshow(decoded_imgs[i].reshape(28, 28), cmap='gray')
+    plt.title("Reconstructed")
+    plt.axis('off')
+plt.show()
+
+# Plot training and validation loss
+plt.figure(figsize=(8, 6))
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss (MSE)')
+plt.title('Training and Validation Loss')
+plt.legend()
+plt.show()
