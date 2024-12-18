@@ -1,0 +1,56 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Generate synthetic data
+np.random.seed(42)
+x = np.random.rand(100, 1)  # 100 samples, single feature
+y = 4 + 3 * x + np.random.randn(100, 1) * 0.5  # Linear relationship with noise
+
+# Add a bias term (x0 = 1) to the feature matrix
+X_b = np.c_[np.ones((x.shape[0], 1)), x]  # Add bias term
+
+# Gradient Descent Parameters
+learning_rate = 0.1
+n_iterations = 1000
+m = len(x)  # Number of samples
+
+# Initialize theta (parameters) to zero
+theta = np.random.randn(2, 1)  # Two parameters: theta_0 (bias) and theta_1
+
+# Cost function (Mean Squared Error)
+def compute_cost(X, y, theta):
+    predictions = X.dot(theta)
+    errors = predictions - y
+    return (1 / (2 * m)) * np.sum(errors ** 2)
+
+# Gradient Descent Algorithm
+cost_history = []
+for iteration in range(n_iterations):
+    gradients = (1 / m) * X_b.T.dot(X_b.dot(theta) - y)  # Compute gradients
+    theta -= learning_rate * gradients  # Update parameters
+
+    # Record the cost for visualization
+    cost = compute_cost(X_b, y, theta)
+    cost_history.append(cost)
+
+# Output the optimized parameters
+print("Optimized theta:", theta.ravel())
+
+# Plot the cost function history
+plt.figure(figsize=(8, 6))
+plt.plot(range(n_iterations), cost_history, label="Cost Function")
+plt.xlabel("Iterations")
+plt.ylabel("Cost (MSE)")
+plt.title("Gradient Descent: Cost Function vs. Iterations")
+plt.legend()
+plt.show()
+
+# Visualize the linear fit
+plt.figure(figsize=(8, 6))
+plt.scatter(x, y, color="blue", label="Data")
+plt.plot(x, X_b.dot(theta), color="red", label="Fitted Line")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Linear Regression Fit")
+plt.legend()
+plt.show()
