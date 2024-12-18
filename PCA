@@ -1,0 +1,49 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+# Load the Iris dataset
+data = load_iris()
+X = data.data  # Features
+y = data.target  # Labels
+
+# Standardize the dataset
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Apply PCA
+pca = PCA(n_components=2)  # Reduce to 2 dimensions for visualization
+X_pca = pca.fit_transform(X_scaled)
+
+# Explained variance ratio
+explained_variance = pca.explained_variance_ratio_
+print(f"Explained Variance Ratios: {explained_variance}")
+print(f"Total Explained Variance: {np.sum(explained_variance)}")
+
+# Visualize the PCA results
+plt.figure(figsize=(8, 6))
+for i, label in enumerate(np.unique(y)):
+    plt.scatter(
+        X_pca[y == label, 0],
+        X_pca[y == label, 1],
+        label=f"Class {data.target_names[label]}",
+        alpha=0.7
+    )
+plt.xlabel("Principal Component 1")
+plt.ylabel("Principal Component 2")
+plt.title("PCA of Iris Dataset")
+plt.legend()
+plt.grid()
+plt.show()
+
+# Cumulative explained variance plot
+plt.figure(figsize=(8, 6))
+cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
+plt.plot(range(1, len(cumulative_variance) + 1), cumulative_variance, marker='o')
+plt.xlabel("Number of Principal Components")
+plt.ylabel("Cumulative Explained Variance")
+plt.title("Cumulative Explained Variance")
+plt.grid()
+plt.show()
